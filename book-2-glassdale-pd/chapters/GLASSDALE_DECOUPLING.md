@@ -16,8 +16,8 @@ Below, there are instructions for installing an example application on your mach
 
 You can also explore this concept by watching two interactive workshops about component coupling on scrimba.com. They cover the example application below.
 
-* [Decoupling Components in JavaScript - Part 1](https://scrimba.com/p/p4Kwxcx/cvwpqVSK)
-* [Decoupling Components in JavaScript - Part 2](https://scrimba.com/p/p4Kwxcx/cmpRQ8Hb)
+- [Decoupling Components in JavaScript - Part 1](https://scrimba.com/p/p4Kwxcx/cvwpqVSK)
+- [Decoupling Components in JavaScript - Part 2](https://scrimba.com/p/p4Kwxcx/cmpRQ8Hb)
 
 ## Text Message Reading Application
 
@@ -50,8 +50,8 @@ Refactor your index.html file with the following addition.
 
 ```html
 <main class="container">
-    <div class="messages"></div>
-    <div class="themes"></div>
+  <div class="messages"></div>
+  <div class="themes"></div>
 </main>
 ```
 
@@ -60,16 +60,16 @@ Add the following file to your application.
 > #### `scripts/themes/ThemeButtons.js`
 
 ```js
-const contentTarget = document.querySelector(".themes")
+const contentTarget = document.querySelector(".themes");
 
 export const ThemeButtons = () => {
-    contentTarget.innerHTML = `
+  contentTarget.innerHTML = `
         <button class="themeButton" id="themeButton--red">Red</button>
         <button class="themeButton" id="themeButton--purple">Purple</button>
         <button class="themeButton" id="themeButton--blue">Blue</button>
         <button class="themeButton" id="themeButton--green">Green</button>
-    `
-}
+    `;
+};
 ```
 
 Then update `main.js` to render your new buttons.
@@ -77,11 +77,11 @@ Then update `main.js` to render your new buttons.
 > #### `scripts/main.js`
 
 ```js
-import { MessageList } from "./messages/MessageList.js"
-import { ThemeButtons } from "./theme/ThemeButtons.js"
+import { MessageList } from "./messages/MessageList.js";
+import { ThemeButtons } from "./themes/ThemeButtons.js";
 
-MessageList()
-ThemeButtons()
+MessageList();
+ThemeButtons();
 ```
 
 ### Message List Responds to Button Clicks
@@ -97,15 +97,15 @@ Copy pasta the following code to the very bottom of your message list module.
     Color the messages when one of the buttons in the ThemeButtons
     component is clicked.
 */
-document.querySelector(".themes").addEventListener("click", e => {
-    const idOfClickedElement = e.target.id
+document.querySelector(".themes").addEventListener("click", (e) => {
+  const idOfClickedElement = e.target.id;
 
-    if (idOfClickedElement.startsWith("themeButton--")) {
-        const [prefix, color] = idOfClickedElement.split("--")
-        contentTarget.classList = []
-        contentTarget.classList.add(color)
-    }
-})
+  if (idOfClickedElement.startsWith("themeButton--")) {
+    const [prefix, color] = idOfClickedElement.split("--");
+    contentTarget.classList = [];
+    contentTarget.classList.add(color);
+  }
+});
 ```
 
 Unfortunately, the **`MessageList`** and **`ThemeButtons`** are now tightly coupled. What couples them?
@@ -145,7 +145,7 @@ In your application, your components will use a common system for talking to eac
 In this application, the agreed-upon location will be the top-most DOM element.
 
 ```html
-<main class="container">
+<main class="container"></main>
 ```
 
 That is going to be the event hub because it's the element in which all components will be children of.
@@ -161,41 +161,39 @@ Replace what's currently in the file with the following code. Your instruction t
 > #### `scripts/themes/ThemeButtons.js`
 
 ```js
-const eventHub = document.querySelector(".container")
-const contentTarget = document.querySelector(".themes")
+const eventHub = document.querySelector(".container");
+const contentTarget = document.querySelector(".themes");
 
 // Listen for browser generated click event in this component
-eventHub.addEventListener("click", clickEvent => {
+eventHub.addEventListener("click", (clickEvent) => {
+  // Make sure it was one of the color buttons
+  if (clickEvent.target.id.startsWith("btnTheme--")) {
+    // Get the chosen color
+    const [prefix, chosenColor] = clickEvent.target.id.split("--");
 
-    // Make sure it was one of the color buttons
-    if (clickEvent.target.id.startsWith("btnTheme--")) {
-
-        // Get the chosen color
-        const [prefix, chosenColor] = clickEvent.target.id.split("--")
-
-        /*
+    /*
             Create a new custom event, with a good name, and
             add a property to the `detail` object that specifies
             which color was chosen
         */
-        const colorChosenEvent = new CustomEvent("colorChosen", {
-            detail: {
-                color: chosenColor
-            }
-        })
+    const colorChosenEvent = new CustomEvent("colorChosen", {
+      detail: {
+        color: chosenColor,
+      },
+    });
 
-        eventHub.dispatchEvent(colorChosenEvent)
-    }
-})
+    eventHub.dispatchEvent(colorChosenEvent);
+  }
+});
 
 export const ThemeButtons = () => {
-    contentTarget.innerHTML = `
+  contentTarget.innerHTML = `
         <button class="btnTheme" id="btnTheme--red">Red</button>
         <button class="btnTheme" id="btnTheme--purple">Purple</button>
         <button class="btnTheme" id="btnTheme--blue">Blue</button>
         <button class="btnTheme" id="btnTheme--green">Green</button>
-    `
-}
+    `;
+};
 ```
 
 Now refactor your message list component. It is going to listen for your custom event. Remove the current code that listens for the "click" event that's at the buttom of the file. Then add the following code.
@@ -205,23 +203,21 @@ Now refactor your message list component. It is going to listen for your custom 
     Color the messages when one of the buttons in the ThemeButtons
     component is clicked.
 */
-const eventHub = document.querySelector(".container")
+const eventHub = document.querySelector(".container");
 
-eventHub.addEventListener("colorChosen", event => {
-    const color = event.detail.color
+eventHub.addEventListener("colorChosen", (event) => {
+  const color = event.detail.color;
 
-    contentTarget.classList = []
-    contentTarget.classList.add(color)
-})
+  contentTarget.classList = [];
+  contentTarget.classList.add(color);
+});
 ```
 
 Now the only thing that connects the two components is the custom message. Neither is aware that the other component exists at all, or it's internal implementation.
 
-
 ## Practice: Filtering Messages with Custom Events
 
 Ok, so after releasing the software to the public, no one really wants to see all of their messages in one, giant list. They would much rather see a list of their friends, choose one, and then see the message from that friend.
-
 
 ### Install Application
 
@@ -252,23 +248,22 @@ Time to refactor the application to that the **`FriendList`** component dispatch
 
 ```js
 // Listen for a browser-generated change event
-eventHub.addEventListener("change", changeEvent => {
+eventHub.addEventListener("change", (changeEvent) => {
+  // If the change event was generated by the radio buttons...
+  if (changeEvent.target.classList.contains("friend")) {
+    const selectedFriend = changeEvent.target.value;
 
-    // If the change event was generated by the radio buttons...
-    if (changeEvent.target.classList.contains("friend")) {
-        const selectedFriend = changeEvent.target.value
+    // Generate a new custom message that a friend was selected
+    const message = new CustomEvent("friendSelected", {
+      detail: {
+        friend: selectedFriend,
+      },
+    });
 
-        // Generate a new custom message that a friend was selected
-        const message = new CustomEvent("friendSelected", {
-            detail: {
-                friend: selectedFriend
-            }
-        })
-
-        // Dispatch custom message to event hub
-        eventHub.dispatchEvent(message)
-    }
-})
+    // Dispatch custom message to event hub
+    eventHub.dispatchEvent(message);
+  }
+});
 ```
 
 Then the message list component can listen for that event. It no longer is coupled to the friend list component. This means that the friend list component can change **anything** about its own implementation - class names, HTML elements, structure - and it will have no impact on the message list component. As long as it dispatches the agreed-upon event with the correct data, the application will keep working.
@@ -276,17 +271,14 @@ Then the message list component can listen for that event. It no longer is coupl
 > #### `scripts/messages/MessageList.js`
 
 ```js
-eventHub.addEventListener("friendSelected", event => {
-    const friendName = event.detail.friend
-    const messages = getMessagesByFriend(friendName)
-    render(messages)
-})
+eventHub.addEventListener("friendSelected", (event) => {
+  const friendName = event.detail.friend;
+  const messages = getMessagesByFriend(friendName);
+  render(messages);
+});
 ```
 
-
-
 ## Visualization
-
 
 ![](./images/friendSelected.gif)
 
